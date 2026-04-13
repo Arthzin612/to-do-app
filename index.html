@@ -5,71 +5,675 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>To-Do List · Projeto Acadêmico</title>
 
-  <!--
-    Google Fonts: Lato
-    Carregamos apenas os pesos que usamos (400, 700)
-    para não desperdiçar banda do usuário.
-    display=swap: exibe a fonte do sistema enquanto
-    a Lato carrega (evita texto invisível).
-  -->
   <link
-    href="https://fonts.googleapis.com/css2?
-    family=Lato:wght@400;700&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap"
     rel="stylesheet"
   />
 
-  <!-- CSS externo: mantém o HTML limpo -->
-  <link rel="stylesheet" href="todo-list.css" />
+  <style>
+    /* =====================================================
+       TODO LIST — CSS COMPLETO
+       Projeto Acadêmico · Engenharia de Prompt
+       Técnica principal: Checkbox Hack (sem JavaScript)
+       ===================================================== */
+
+    /* =====================================================
+       PARTE 1 — VARIÁVEIS GLOBAIS (:root)
+       
+       Por quê aqui? O :root é o elemento mais alto da
+       árvore HTML (equivale ao <html>). Variáveis definidas
+       aqui ficam disponíveis em TODO o documento.
+       ===================================================== */
+    :root {
+
+      /* --- CORES DE PRIORIDADE ---
+         Cada prioridade tem 3 variações do mesmo tom:
+         -base: a cor pura (usada em bordas e ícones)
+         -bg:   versão bem clara (fundo suave do item)
+         -text: versão escura (texto legível sobre o -bg)
+         
+         Por quê 3 variações? Para manter contraste
+         correto em todos os contextos (WCAG AA). */
+
+      /* Alta: vermelho/coral — transmite urgência */
+      --alta-base: #e63946;
+      --alta-bg:   #fff0f1;
+      --alta-text: #9b1c26;
+
+      /* Média: âmbar — atenção, mas sem alarme */
+      --media-base: #f4a261;
+      --media-bg:   #fff8f0;
+      --media-text: #8f4e0a;
+
+      /* Baixa: verde-azulado — tranquilidade */
+      --baixa-base: #2a9d8f;
+      --baixa-bg:   #f0faf9;
+      --baixa-text: #1a6b60;
+
+      /* --- CORES NEUTRAS ---
+         Paleta baseada em branco quente, não frio.
+         Por quê? Telas brancas "frias" (#ffffff puro)
+         causam mais fadiga visual do que tons levemente
+         quentinhos como #fafaf8. */
+      --cor-fundo:      #f2f0eb;   /* Fundo da página */
+      --cor-superficie: #fafaf8;   /* Fundo do card principal */
+      --cor-borda:      #e0ddd6;   /* Bordas sutis */
+      --cor-borda-hover:#c8c4bc;   /* Borda ao passar o mouse */
+
+      /* Escala de texto: 3 níveis de contraste */
+      --cor-texto:      #1a1a1a;   /* Texto principal */
+      --cor-texto-2:    #5a5651;   /* Texto secundário */
+      --cor-texto-3:    #9c9790;   /* Texto fantasma/placeholder */
+
+      /* Estado "concluído": cinza amarronzado */
+      --cor-concluido:  #a09a92;
+
+      /* Cor de destaque: verde escuro (tinta de caneta) */
+      --cor-primaria:   #264653;
+      --cor-primaria-hover: #1a3340;
+
+      /* Cor de foco (acessibilidade) */
+      --cor-foco: #2a9d8f;
+
+      /* --- ESPAÇAMENTOS ---
+         Sistema de 4 tamanhos. Baseado em múltiplos
+         de 4px — o padrão mais comum em design systems
+         porque divide bem em telas de diferentes densidades. */
+      --space-xs:  4px;
+      --space-sm:  8px;
+      --space-md:  16px;
+      --space-lg:  24px;
+      --space-xl:  40px;
+
+      /* --- BORDER-RADIUS ---
+         Dois valores: pequeno para inputs/badges,
+         grande para o card principal. */
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+
+      /* --- TIPOGRAFIA ---
+         Stack de fontes: tenta Lato (Google Fonts, você
+         precisa importar), depois Georgia como serifada
+         elegante de fallback, depois as fontes do sistema.
+         
+         Para usar Lato: adicione no <head> do HTML:
+         <link href="https://fonts.googleapis.com/css2?
+         family=Lato:wght@400;500;700&display=swap"
+         rel="stylesheet"> */
+      --fonte: 'Lato', Georgia, 'Times New Roman', serif;
+
+      /* --- TRANSIÇÕES ---
+         Um valor único reutilizado em todo o arquivo.
+         Por quê? Se você quiser mudar para 150ms ou
+         300ms, muda em um lugar só. */
+      --transicao: 0.18s ease;
+    }
+
+
+    /* =====================================================
+       PARTE 2A — RESET MÍNIMO
+       
+       Não fazemos um reset agressivo (como o Reset CSS
+       de Eric Meyer). Apenas corrigimos os problemas
+       mais comuns de inconsistência entre navegadores.
+       ===================================================== */
+
+    /* box-sizing: border-box faz padding e border
+       serem incluídos na largura total do elemento.
+       Sem isso, um elemento de 200px com padding de
+       16px ficaria com 232px na prática. */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* Remove os marcadores de lista globalmente.
+       Adicionamos de volta semanticamente onde precisar. */
+    ul, ol {
+      list-style: none;
+    }
+
+    /* Herda fontes em inputs e botões.
+       Por padrão, navegadores aplicam fontes diferentes
+       em elementos de formulário — isso corrige isso. */
+    input,
+    button,
+    select {
+      font-family: inherit;
+      font-size: inherit;
+    }
+
+
+    /* =====================================================
+       PARTE 2B — LAYOUT GERAL (Mobile-First)
+       
+       Mobile-first significa: escrevemos primeiro para
+       telas PEQUENAS. Depois, usamos @media (min-width)
+       para adaptar para telas maiores. É o oposto de
+       "desktop first" que usa max-width.
+       ===================================================== */
+    body {
+      font-family: var(--fonte);
+      font-size: 16px;
+      line-height: 1.5;
+      color: var(--cor-texto);
+      background-color: var(--cor-fundo);
+
+      /* Centraliza verticalmente em telas grandes */
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+
+      /* Padding horizontal: respira em telas pequenas */
+      padding: var(--space-lg) var(--space-md);
+
+      /* Textura discreta: linhas horizontais de caderno */
+      background-image: repeating-linear-gradient(
+        to bottom,
+        transparent,
+        transparent 27px,
+        var(--cor-borda) 27px,
+        var(--cor-borda) 28px
+      );
+    }
+
+    /* O card principal ocupa 100% em mobile */
+    .card-principal {
+      background: var(--cor-superficie);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--cor-borda);
+      width: 100%;
+
+      /* max-width limita em telas maiores */
+      max-width: 600px;
+
+      /* Margem interna generosa */
+      padding: var(--space-xl) var(--space-lg);
+
+      /* Sombra sutil: dá sensação de elevação */
+      box-shadow:
+        0 1px 3px rgba(0, 0, 0, 0.06),
+        0 4px 16px rgba(0, 0, 0, 0.06);
+
+      /* Borda esquerda: a "lombada" do caderno */
+      border-left: 4px solid var(--cor-primaria);
+    }
+
+    /* Em telas maiores: padding extra */
+    @media (min-width: 480px) {
+      .card-principal {
+        padding: var(--space-xl) var(--space-xl);
+      }
+    }
+
+
+    /* =====================================================
+       CABEÇALHO
+       ===================================================== */
+    .cabecalho {
+      margin-bottom: var(--space-xl);
+
+      /* Linha divisória em estilo tracejado (caderno) */
+      padding-bottom: var(--space-lg);
+      border-bottom: 2px dashed var(--cor-borda);
+    }
+
+    .cabecalho h1 {
+      font-size: clamp(1.6rem, 5vw, 2.2rem);
+      /* clamp(min, preferido, max): escala o fonte
+         entre 1.6rem e 2.2rem de acordo com a tela.
+         5vw = 5% da largura da viewport. */
+
+      font-weight: 700;
+      color: var(--cor-primaria);
+      letter-spacing: -0.5px;
+      line-height: 1.2;
+    }
+
+    .cabecalho p {
+      margin-top: var(--space-xs);
+      font-size: 0.78rem;
+      color: var(--cor-texto-3);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+
+    /* =====================================================
+       ÁREA DO FORMULÁRIO (decorativa nesta versão CSS)
+       
+       IMPORTANTE: Este formulário é VISUAL APENAS.
+       Adicionar tarefas dinamicamente requer JavaScript.
+       Mantemos o HTML para o layout ser completo e
+       demonstrar a estrutura correta.
+       ===================================================== */
+    .formulario {
+      display: flex;
+      gap: var(--space-sm);
+      margin-bottom: var(--space-xl);
+      flex-wrap: wrap; /* Quebra linha em telas muito pequenas */
+    }
+
+    .formulario__input {
+      flex: 1;
+      min-width: 140px; /* Evita que fique minúsculo */
+      padding: var(--space-sm) var(--space-md);
+      border: 1px solid var(--cor-borda);
+      border-radius: var(--radius-sm);
+      background: white;
+      color: var(--cor-texto);
+      transition: border-color var(--transicao);
+    }
+
+    .formulario__input::placeholder {
+      color: var(--cor-texto-3);
+    }
+
+    /* Foco visível: borda colorida + outline
+       Por quê dois efeitos? O outline é para
+       navegação por teclado (acessibilidade WCAG).
+       A border-color é o feedback visual primário. */
+    .formulario__input:focus {
+      outline: 2px solid var(--cor-foco);
+      outline-offset: 1px;
+      border-color: var(--cor-foco);
+    }
+
+    .formulario__select {
+      padding: var(--space-sm) var(--space-md);
+      border: 1px solid var(--cor-borda);
+      border-radius: var(--radius-sm);
+      background: white;
+      color: var(--cor-texto);
+      cursor: pointer;
+      transition: border-color var(--transicao);
+    }
+
+    .formulario__select:focus {
+      outline: 2px solid var(--cor-foco);
+      outline-offset: 1px;
+      border-color: var(--cor-foco);
+    }
+
+    .formulario__botao {
+      padding: var(--space-sm) var(--space-md);
+      background: var(--cor-primaria);
+      color: white;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-weight: 700;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition:
+        background var(--transicao),
+        transform var(--transicao);
+
+      /* Acessibilidade: indica que é decorativo */
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Nota: o botão não tem hover/active porque
+       está desabilitado nesta versão sem JavaScript */
+
+
+    /* =====================================================
+       SEÇÕES DE CATEGORIA
+       ===================================================== */
+    .secao-categoria {
+      margin-bottom: var(--space-xl);
+    }
+
+    .secao-categoria:last-of-type {
+      margin-bottom: 0;
+    }
+
+    .secao-categoria__titulo {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--cor-texto-3);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: var(--space-md);
+
+      /* Linha ao lado do título (efeito de régua) */
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+    }
+
+    .secao-categoria__titulo::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--cor-borda);
+    }
+
+
+    /* =====================================================
+       LISTA DE TAREFAS
+       ===================================================== */
+    .lista-tarefas {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-sm);
+    }
+
+
+    /* =====================================================
+       PARTE 4 — CHECKBOX HACK (O CORAÇÃO DO PROJETO)
+       
+       Vamos destrinchar cada seletor:
+       
+       [1] input[type="checkbox"]
+           → Esconde o checkbox nativo do navegador.
+             display:none remove da tela E do layout.
+       
+       [2] .item-tarefa label
+           → Estiliza o label como se fosse o item todo.
+             É o elemento visível e clicável.
+       
+       [3] .item-tarefa label::before
+           → Cria o checkbox visual do zero com CSS.
+             É um círculo vazio que vira preenchido.
+       
+       [4] .item-tarefa input:checked + label
+           → QUANDO o input estiver marcado,
+             estiliza o label irmão adjacente.
+             Este é o seletor-chave do Checkbox Hack.
+       
+       [5] .item-tarefa input:checked + label::before
+           → QUANDO marcado, muda o visual do checkbox.
+       ===================================================== */
+
+    /* [1] Esconde o checkbox nativo */
+    .item-tarefa input[type="checkbox"] {
+      display: none;
+      /* Por quê não visibility:hidden ou opacity:0?
+         Porque esses ainda ocupam espaço no layout.
+         display:none remove completamente. */
+    }
+
+    /* [2] O label É o item de tarefa visível */
+    .item-tarefa label {
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+      padding: var(--space-md);
+      border-radius: var(--radius-md);
+      border: 1px solid transparent;
+      cursor: pointer;
+      font-size: 0.95rem;
+      color: var(--cor-texto);
+      transition:
+        background    var(--transicao),
+        border-color  var(--transicao),
+        color         var(--transicao);
+
+      /* Importante: position relative permite posicionar
+         elementos filhos com position absolute */
+      position: relative;
+    }
+
+    /* Hover no item: feedback visual imediato */
+    .item-tarefa label:hover {
+      background: rgba(0, 0, 0, 0.03);
+      border-color: var(--cor-borda);
+    }
+
+    /* [3] O checkbox visual (círculo) */
+    .item-tarefa label::before {
+      content: '';
+
+      /* Tamanho fixo: min-width evita que encolha
+         quando o texto da tarefa é muito longo */
+      width: 20px;
+      height: 20px;
+      min-width: 20px;
+
+      border-radius: 50%;
+      border: 2px solid var(--cor-borda-hover);
+      background: white;
+      transition:
+        background       var(--transicao),
+        border-color     var(--transicao),
+        transform        0.15s ease;
+    }
+
+    /* [4] Estado marcado: texto riscado + opacidade */
+    .item-tarefa input:checked + label {
+      color: var(--cor-concluido);
+      text-decoration: line-through;
+      text-decoration-color: var(--cor-concluido);
+      text-decoration-thickness: 1.5px;
+      opacity: 0.65;
+    }
+
+    /* [5] Estado marcado: checkbox visual preenchido */
+    .item-tarefa input:checked + label::before {
+      background: var(--cor-primaria);
+      border-color: var(--cor-primaria);
+
+      /* Checkmark feito com SVG inline como data URI.
+         Por quê não usar ✓ como content? Porque o
+         Unicode do checkmark renderiza diferente em
+         cada sistema operacional. O SVG é sempre igual. */
+      background-image: url(
+        "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'"
+        " viewBox='0 0 12 10'%3E%3Cpolyline"
+        " points='1.5%2C5 4.5%2C8 10.5%2C1.5'"
+        " stroke='white' stroke-width='2'"
+        " fill='none' stroke-linecap='round'"
+        " stroke-linejoin='round'/%3E%3C%2Fsvg%3E"
+      );
+      background-size: 12px 10px;
+      background-repeat: no-repeat;
+      background-position: center;
+
+      /* Micro-animação: o checkbox "pulsa" ao marcar */
+      transform: scale(1.15);
+    }
+
+    /* Hover inibe o scale quando já marcado: evita
+       que o checkbox fique gigante ao passar o mouse */
+    .item-tarefa input:checked + label:hover::before {
+      transform: scale(1.05);
+    }
+
+    /* O texto da tarefa em si */
+    .item-tarefa__texto {
+      flex: 1; /* Ocupa todo espaço disponível */
+      line-height: 1.4;
+    }
+
+    /* Acessibilidade: foco via teclado (Tab)
+       :focus-within reage quando QUALQUER filho
+       do label recebe foco — mas aqui usamos no
+       label diretamente via :focus-visible */
+    .item-tarefa label:focus-visible {
+      outline: 2px solid var(--cor-foco);
+      outline-offset: 2px;
+    }
+
+
+    /* =====================================================
+       PARTE 3 — SISTEMA DE PRIORIDADES
+       
+       A classe vai no .item-tarefa (o <li>).
+       O CSS usa o seletor descendente para atingir
+       filhos específicos dentro do item.
+       ===================================================== */
+
+    /* --- ALTA PRIORIDADE --- */
+    .prioridade-alta label {
+      /* Borda esquerda colorida: o marcador visual
+         mais importante de prioridade. 3px de espessura
+         é suficiente para chamar atenção sem poluir. */
+      border-left: 3px solid var(--alta-base) !important;
+      background: var(--alta-bg);
+    }
+
+    .prioridade-alta label:hover {
+      background: #ffe0e2; /* Versão levemente mais escura */
+      border-color: var(--cor-borda) !important;
+      border-left-color: var(--alta-base) !important;
+    }
+
+    /* Quando ALTA é concluída: borda some junto */
+    .prioridade-alta input:checked + label {
+      border-left-color: var(--cor-borda) !important;
+      background: transparent;
+    }
+
+    /* --- MÉDIA PRIORIDADE --- */
+    .prioridade-media label {
+      border-left: 3px solid var(--media-base) !important;
+      background: var(--media-bg);
+    }
+
+    .prioridade-media label:hover {
+      background: #fdecd0;
+      border-color: var(--cor-borda) !important;
+      border-left-color: var(--media-base) !important;
+    }
+
+    .prioridade-media input:checked + label {
+      border-left-color: var(--cor-borda) !important;
+      background: transparent;
+    }
+
+    /* --- BAIXA PRIORIDADE --- */
+    .prioridade-baixa label {
+      border-left: 3px solid var(--baixa-base) !important;
+      background: var(--baixa-bg);
+    }
+
+    .prioridade-baixa label:hover {
+      background: #d8f2ef;
+      border-color: var(--cor-borda) !important;
+      border-left-color: var(--baixa-base) !important;
+    }
+
+    .prioridade-baixa input:checked + label {
+      border-left-color: var(--cor-borda) !important;
+      background: transparent;
+    }
+
+
+    /* =====================================================
+       BADGES DE PRIORIDADE
+       
+       .badge fica dentro do <label>.
+       Quando a tarefa é concluída, o badge some —
+       tarefa concluída não tem mais urgência visual.
+       ===================================================== */
+    .badge {
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 2px var(--space-sm);
+      border-radius: 20px; /* Pílula */
+      white-space: nowrap; /* Nunca quebra em duas linhas */
+      margin-left: auto;   /* Empurra para a direita */
+
+      /* Transição para sumir suavemente */
+      transition: opacity var(--transicao);
+    }
+
+    /* Cores dos badges por prioridade */
+    .prioridade-alta .badge {
+      background: var(--alta-bg);
+      color: var(--alta-text);
+      border: 1px solid var(--alta-base);
+    }
+
+    .prioridade-media .badge {
+      background: var(--media-bg);
+      color: var(--media-text);
+      border: 1px solid var(--media-base);
+    }
+
+    .prioridade-baixa .badge {
+      background: var(--baixa-bg);
+      color: var(--baixa-text);
+      border: 1px solid var(--baixa-base);
+    }
+
+    /* Badge some quando tarefa está concluída.
+       Seletor: quando o input estiver checked,
+       o label adjacente contém o .badge */
+    .item-tarefa input:checked + label .badge {
+      display: none;
+    }
+
+
+    /* =====================================================
+       RODAPÉ DO CARD
+       ===================================================== */
+    .rodape {
+      margin-top: var(--space-xl);
+      padding-top: var(--space-lg);
+      border-top: 2px dashed var(--cor-borda);
+      font-size: 0.72rem;
+      color: var(--cor-texto-3);
+      text-align: center;
+      letter-spacing: 0.04em;
+    }
+
+
+    /* =====================================================
+       ACESSIBILIDADE — REDUÇÃO DE MOVIMENTO
+       
+       Alguns usuários têm condições vestibulares
+       (como tontura) que pioram com animações.
+       A media query prefers-reduced-motion respeita
+       a configuração de sistema do usuário.
+       ===================================================== */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+      }
+    }
+
+
+    /* =====================================================
+       RESPONSIVIDADE EXTRA (telas muito pequenas)
+       ===================================================== */
+    @media (max-width: 360px) {
+      .formulario {
+        flex-direction: column;
+      }
+
+      .formulario__botao {
+        width: 100%;
+      }
+
+      .item-tarefa label {
+        font-size: 0.88rem;
+        padding: var(--space-sm) var(--space-md);
+        gap: var(--space-sm);
+      }
+    }
+  </style>
 </head>
 
 <body>
 
-  <!-- ===== CARD PRINCIPAL ===== -->
-  <!--
-    <main> é o ponto de entrada semântico do
-    conteúdo principal. Leitores de tela usam
-    landmarks como este para navegação rápida.
-  -->
   <main class="card-principal" role="main">
 
 
-    <!-- ===== CABEÇALHO ===== -->
     <header class="cabecalho">
 
-      <!--
-        <h1>: deve existir apenas UM por página.
-        Descreve o propósito da página inteira.
-      -->
       <h1>📋 Minhas Tarefas</h1>
 
-      <!--
-        <p> aqui é metadata visual: versão e
-        contexto do projeto. Não é um heading
-        porque não descreve uma seção nova.
-      -->
       <p>Projeto Acadêmico · Engenharia de Prompt · v1.0</p>
 
     </header>
-    <!-- /CABEÇALHO -->
-
-
-    <!-- ===== FORMULÁRIO (VISUAL / DECORATIVO) ===== -->
-    <!--
-      NOTA TÉCNICA IMPORTANTE:
-      Este formulário é VISUAL APENAS nesta versão.
-      Adicionar tarefas dinamicamente ao DOM exige
-      JavaScript — uma limitação conhecida e documentada
-      do escopo CSS-only deste projeto.
-
-      Mantemos a estrutura HTML correta para:
-      1. Demonstrar que sabemos como seria implementado
-      2. O layout ficar completo e profissional
-      3. A acessibilidade do formulário estar correta
-         (para quando JS for adicionado futuramente)
-
-      aria-label no fieldset explica o propósito
-      do grupo de controles para leitores de tela.
-    -->
     <section
       class="area-formulario"
       aria-label="Adicionar nova tarefa (recurso indisponível nesta versão)"
@@ -77,12 +681,6 @@
 
       <div class="formulario" role="group">
 
-        <!--
-          aria-label em inputs cujo <label> está
-          ausente ou distante. Aqui não há <label>
-          visível, então aria-label é obrigatório
-          para acessibilidade.
-        -->
         <input
           class="formulario__input"
           type="text"
@@ -92,11 +690,6 @@
           title="Adicionar tarefas requer JavaScript"
         />
 
-        <!--
-          <select> para prioridade.
-          O aria-label descreve o propósito porque
-          não há <label> visível associado.
-        -->
         <select
           class="formulario__select"
           aria-label="Prioridade da nova tarefa"
@@ -107,11 +700,6 @@
           <option value="baixa">🟢 Baixa</option>
         </select>
 
-        <!--
-          O botão "+" sem contexto não diz nada.
-          aria-label torna o propósito explícito
-          para tecnologias assistivas.
-        -->
         <button
           class="formulario__botao"
           aria-label="Adicionar nova tarefa"
@@ -124,20 +712,6 @@
       </div>
 
     </section>
-    <!-- /FORMULÁRIO -->
-
-
-    <!-- ===== LISTA DE TAREFAS ===== -->
-    <!--
-      Dividimos em <section> por categoria.
-      Cada <section> tem um <h2> que a descreve.
-      aria-labelledby conecta a section ao seu h2:
-      leitores de tela anunciam "Seção: Faculdade"
-      ao entrar na region.
-    -->
-
-
-    <!-- CATEGORIA: FACULDADE -->
     <section
       class="secao-categoria"
       aria-labelledby="titulo-faculdade"
@@ -150,59 +724,26 @@
         🎓 Faculdade
       </h2>
 
-      <!--
-        role="list" é necessário porque aplicamos
-        list-style: none no CSS. Sem ele, o Safari
-        com VoiceOver remove a semântica de lista.
-      -->
       <ul class="lista-tarefas" role="list">
 
 
-        <!-- TAREFA 1: Alta prioridade, não concluída -->
-        <!--
-          ESTRUTURA DE CADA ITEM — REGRA DE OURO:
-          O <input> DEVE VIR ANTES do <label> no HTML.
-          O seletor CSS "input:checked + label" usa
-          o operador + (irmão adjacente), que só
-          funciona para o elemento IMEDIATAMENTE APÓS.
-          Se o label vier antes, o CSS não funciona.
-        -->
         <li
           class="item-tarefa prioridade-alta"
           role="listitem"
         >
 
-          <!--
-            id="t1": deve ser único na página inteira.
-            Conecta com o for="t1" do label abaixo.
-            Convenção: "t" de tarefa + número sequencial.
-          -->
           <input
             type="checkbox"
             id="t1"
             aria-describedby="prioridade-t1"
           />
 
-          <!--
-            for="t1": conecta este label ao input t1.
-            Clicar em qualquer parte deste label
-            alterna o estado do checkbox t1.
-          -->
           <label for="t1">
 
             <span class="item-tarefa__texto">
               Entregar relatório de Eng. de Prompt
             </span>
 
-            <!--
-              O badge é um span DENTRO do label.
-              Isso é intencional: quando o label
-              recebe text-decoration: line-through,
-              o risco afeta todo o conteúdo do label,
-              incluindo o texto do badge.
-              
-              id para aria-describedby do input acima.
-            -->
             <span
               class="badge"
               id="prioridade-t1"
@@ -214,10 +755,6 @@
           </label>
 
         </li>
-        <!-- /TAREFA 1 -->
-
-
-        <!-- TAREFA 2: Média prioridade, não concluída -->
         <li
           class="item-tarefa prioridade-media"
           role="listitem"
@@ -246,16 +783,6 @@
           </label>
 
         </li>
-        <!-- /TAREFA 2 -->
-
-
-        <!-- TAREFA 3: Baixa prioridade, CONCLUÍDA -->
-        <!--
-          O atributo "checked" no HTML marca o
-          checkbox como concluído desde o carregamento.
-          Isso demonstra visualmente o estado final
-          do Checkbox Hack sem precisar interagir.
-        -->
         <li
           class="item-tarefa prioridade-baixa"
           role="listitem"
@@ -285,10 +812,6 @@
           </label>
 
         </li>
-        <!-- /TAREFA 3 -->
-
-
-        <!-- TAREFA 4: Alta prioridade, não concluída -->
         <li
           class="item-tarefa prioridade-alta"
           role="listitem"
@@ -317,16 +840,9 @@
           </label>
 
         </li>
-        <!-- /TAREFA 4 -->
-
-
-      </ul>
+        </ul>
 
     </section>
-    <!-- /CATEGORIA: FACULDADE -->
-
-
-    <!-- CATEGORIA: PESSOAL -->
     <section
       class="secao-categoria"
       aria-labelledby="titulo-pessoal"
@@ -342,7 +858,6 @@
       <ul class="lista-tarefas" role="list">
 
 
-        <!-- TAREFA 5: Média prioridade, concluída -->
         <li
           class="item-tarefa prioridade-media"
           role="listitem"
@@ -372,10 +887,6 @@
           </label>
 
         </li>
-        <!-- /TAREFA 5 -->
-
-
-        <!-- TAREFA 6: Baixa prioridade, não concluída -->
         <li
           class="item-tarefa prioridade-baixa"
           role="listitem"
@@ -404,10 +915,6 @@
           </label>
 
         </li>
-        <!-- /TAREFA 6 -->
-
-
-        <!-- TAREFA 7: Alta prioridade, não concluída -->
         <li
           class="item-tarefa prioridade-alta"
           role="listitem"
@@ -436,16 +943,9 @@
           </label>
 
         </li>
-        <!-- /TAREFA 7 -->
-
-
-      </ul>
+        </ul>
 
     </section>
-    <!-- /CATEGORIA: PESSOAL -->
-
-
-    <!-- CATEGORIA: PROJETOS -->
     <section
       class="secao-categoria"
       aria-labelledby="titulo-projetos"
@@ -461,7 +961,6 @@
       <ul class="lista-tarefas" role="list">
 
 
-        <!-- TAREFA 8: Média prioridade, não concluída -->
         <li
           class="item-tarefa prioridade-media"
           role="listitem"
@@ -490,10 +989,6 @@
           </label>
 
         </li>
-        <!-- /TAREFA 8 -->
-
-
-        <!-- TAREFA 9: Baixa prioridade, não concluída -->
         <li
           class="item-tarefa prioridade-baixa"
           role="listitem"
@@ -522,25 +1017,12 @@
           </label>
 
         </li>
-        <!-- /TAREFA 9 -->
-
-
-      </ul>
+        </ul>
 
     </section>
-    <!-- /CATEGORIA: PROJETOS -->
-
-
-    <!-- ===== RODAPÉ DO CARD ===== -->
     <footer class="rodape">
       <p>HTML5 + CSS3 · Zero JavaScript · WCAG AA</p>
     </footer>
-    <!-- /RODAPÉ -->
-
-
-  </main>
-  <!-- /CARD PRINCIPAL -->
-
-
-</body>
+    </main>
+  </body>
 </html>
