@@ -3,475 +3,544 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Meu Site</title>
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet" />
-  <style>
-    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  <title>To-Do List · Projeto Acadêmico</title>
 
-    :root {
-      --bg: #0a0a0f;
-      --surface: #12121a;
-      --border: #1e1e2e;
-      --accent: #7c6dfa;
-      --accent2: #fa6d9a;
-      --text: #e8e8f0;
-      --muted: #6b6b80;
-      --card: #16161f;
-    }
+  <!--
+    Google Fonts: Lato
+    Carregamos apenas os pesos que usamos (400, 700)
+    para não desperdiçar banda do usuário.
+    display=swap: exibe a fonte do sistema enquanto
+    a Lato carrega (evita texto invisível).
+  -->
+  <link
+    href="https://fonts.googleapis.com/css2?
+    family=Lato:wght@400;700&display=swap"
+    rel="stylesheet"
+  />
 
-    html { scroll-behavior: smooth; }
-
-    body {
-      font-family: 'DM Sans', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      overflow-x: hidden;
-    }
-
-    /* ── NOISE OVERLAY ── */
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
-      pointer-events: none;
-      z-index: 0;
-      opacity: 0.5;
-    }
-
-    /* ── BLOB BACKGROUND ── */
-    .blob-wrap {
-      position: fixed;
-      inset: 0;
-      z-index: 0;
-      pointer-events: none;
-      overflow: hidden;
-    }
-    .blob {
-      position: absolute;
-      border-radius: 50%;
-      filter: blur(100px);
-      opacity: 0.15;
-      animation: float 12s ease-in-out infinite;
-    }
-    .blob-1 { width: 500px; height: 500px; background: var(--accent); top: -100px; left: -100px; animation-delay: 0s; }
-    .blob-2 { width: 400px; height: 400px; background: var(--accent2); bottom: -80px; right: -80px; animation-delay: 4s; }
-    .blob-3 { width: 300px; height: 300px; background: #6dfacc; top: 40%; left: 50%; animation-delay: 8s; }
-
-    @keyframes float {
-      0%, 100% { transform: translateY(0) scale(1); }
-      50% { transform: translateY(-40px) scale(1.05); }
-    }
-
-    /* ── NAV ── */
-    nav {
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      z-index: 100;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 1.2rem 5%;
-      background: rgba(10,10,15,0.7);
-      backdrop-filter: blur(20px);
-      border-bottom: 1px solid var(--border);
-    }
-
-    .logo {
-      font-family: 'Syne', sans-serif;
-      font-weight: 800;
-      font-size: 1.4rem;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      letter-spacing: -0.5px;
-    }
-
-    .nav-links { display: flex; gap: 2rem; list-style: none; }
-    .nav-links a {
-      color: var(--muted);
-      text-decoration: none;
-      font-size: 0.9rem;
-      font-weight: 300;
-      letter-spacing: 0.02em;
-      transition: color 0.3s;
-    }
-    .nav-links a:hover { color: var(--text); }
-
-    .nav-cta {
-      padding: 0.55rem 1.4rem;
-      border-radius: 100px;
-      border: 1px solid var(--accent);
-      color: var(--accent) !important;
-      font-size: 0.85rem !important;
-      transition: background 0.3s, color 0.3s !important;
-    }
-    .nav-cta:hover { background: var(--accent); color: #fff !important; -webkit-text-fill-color: #fff !important; }
-
-    /* ── HERO ── */
-    .hero {
-      position: relative;
-      z-index: 1;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 8rem 5% 4rem;
-    }
-
-    .hero-inner { max-width: 800px; }
-
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.4rem 1rem;
-      border-radius: 100px;
-      border: 1px solid var(--border);
-      background: var(--surface);
-      font-size: 0.78rem;
-      color: var(--muted);
-      margin-bottom: 2rem;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-      animation: fadeUp 0.8s ease both;
-    }
-    .badge-dot {
-      width: 6px; height: 6px;
-      border-radius: 50%;
-      background: var(--accent);
-      animation: pulse 2s infinite;
-    }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.4; transform: scale(0.8); }
-    }
-
-    h1 {
-      font-family: 'Syne', sans-serif;
-      font-size: clamp(2.8rem, 7vw, 5.5rem);
-      font-weight: 800;
-      line-height: 1.05;
-      letter-spacing: -2px;
-      margin-bottom: 1.5rem;
-      animation: fadeUp 0.8s 0.1s ease both;
-    }
-
-    .grad {
-      background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    .hero-sub {
-      font-size: 1.1rem;
-      color: var(--muted);
-      font-weight: 300;
-      line-height: 1.7;
-      max-width: 540px;
-      margin: 0 auto 2.5rem;
-      animation: fadeUp 0.8s 0.2s ease both;
-    }
-
-    .hero-btns {
-      display: flex;
-      gap: 1rem;
-      justify-content: center;
-      flex-wrap: wrap;
-      animation: fadeUp 0.8s 0.3s ease both;
-    }
-
-    .btn {
-      padding: 0.85rem 2rem;
-      border-radius: 100px;
-      font-family: 'DM Sans', sans-serif;
-      font-size: 0.95rem;
-      font-weight: 400;
-      cursor: pointer;
-      text-decoration: none;
-      transition: transform 0.2s, box-shadow 0.2s;
-      display: inline-block;
-    }
-    .btn:hover { transform: translateY(-2px); }
-
-    .btn-primary {
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      color: #fff;
-      border: none;
-      box-shadow: 0 0 30px rgba(124,109,250,0.35);
-    }
-    .btn-primary:hover { box-shadow: 0 0 45px rgba(124,109,250,0.55); }
-
-    .btn-ghost {
-      background: transparent;
-      color: var(--text);
-      border: 1px solid var(--border);
-    }
-    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
-
-    /* ── DIVIDER ── */
-    .divider {
-      position: relative;
-      z-index: 1;
-      display: flex;
-      align-items: center;
-      gap: 1.5rem;
-      padding: 0 5%;
-      margin: 2rem 0;
-      color: var(--muted);
-      font-size: 0.8rem;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-    }
-    .divider::before, .divider::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: var(--border);
-    }
-
-    /* ── CARDS / FEATURES ── */
-    .section {
-      position: relative;
-      z-index: 1;
-      padding: 5rem 5%;
-    }
-
-    .section-title {
-      font-family: 'Syne', sans-serif;
-      font-size: clamp(1.8rem, 4vw, 2.8rem);
-      font-weight: 700;
-      letter-spacing: -1px;
-      margin-bottom: 0.75rem;
-    }
-    .section-sub {
-      color: var(--muted);
-      font-weight: 300;
-      margin-bottom: 3rem;
-      font-size: 1rem;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 1.2rem;
-    }
-
-    .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 2rem;
-      transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
-      animation: fadeUp 0.8s ease both;
-    }
-    .card:hover {
-      border-color: var(--accent);
-      transform: translateY(-4px);
-      box-shadow: 0 12px 40px rgba(124,109,250,0.12);
-    }
-
-    .card-icon {
-      width: 44px; height: 44px;
-      border-radius: 10px;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.3rem;
-      margin-bottom: 1.2rem;
-    }
-
-    .card h3 {
-      font-family: 'Syne', sans-serif;
-      font-size: 1.05rem;
-      font-weight: 700;
-      margin-bottom: 0.5rem;
-    }
-
-    .card p {
-      color: var(--muted);
-      font-size: 0.9rem;
-      line-height: 1.65;
-      font-weight: 300;
-    }
-
-    /* ── STATS ── */
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 1px;
-      background: var(--border);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      overflow: hidden;
-      margin: 3rem 0;
-    }
-    .stat {
-      background: var(--card);
-      padding: 2rem;
-      text-align: center;
-    }
-    .stat-num {
-      font-family: 'Syne', sans-serif;
-      font-size: 2.2rem;
-      font-weight: 800;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-    .stat-label { color: var(--muted); font-size: 0.8rem; margin-top: 0.3rem; letter-spacing: 0.05em; }
-
-    /* ── FOOTER ── */
-    footer {
-      position: relative;
-      z-index: 1;
-      border-top: 1px solid var(--border);
-      padding: 2rem 5%;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 1rem;
-    }
-    footer p { color: var(--muted); font-size: 0.85rem; font-weight: 300; }
-    footer a { color: var(--accent); text-decoration: none; font-size: 0.85rem; }
-
-    /* ── ANIMATIONS ── */
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(24px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    /* ── RESPONSIVE ── */
-    @media (max-width: 600px) {
-      .nav-links { display: none; }
-      h1 { letter-spacing: -1px; }
-    }
-  </style>
+  <!-- CSS externo: mantém o HTML limpo -->
+  <link rel="stylesheet" href="todo-list.css" />
 </head>
+
 <body>
 
-  <!-- Blobs -->
-  <div class="blob-wrap">
-    <div class="blob blob-1"></div>
-    <div class="blob blob-2"></div>
-    <div class="blob blob-3"></div>
-  </div>
+  <!-- ===== CARD PRINCIPAL ===== -->
+  <!--
+    <main> é o ponto de entrada semântico do
+    conteúdo principal. Leitores de tela usam
+    landmarks como este para navegação rápida.
+  -->
+  <main class="card-principal" role="main">
 
-  <!-- Nav -->
-  <nav>
-    <span class="logo">⬡ MeuSite</span>
-    <ul class="nav-links">
-      <li><a href="#features">Recursos</a></li>
-      <li><a href="#sobre">Sobre</a></li>
-      <li><a href="#contato" class="nav-cta">Contato</a></li>
-    </ul>
-  </nav>
 
-  <!-- Hero -->
-  <section class="hero">
-    <div class="hero-inner">
-      <div class="badge">
-        <span class="badge-dot"></span>
-        Bem-vindo ao meu site
+    <!-- ===== CABEÇALHO ===== -->
+    <header class="cabecalho">
+
+      <!--
+        <h1>: deve existir apenas UM por página.
+        Descreve o propósito da página inteira.
+      -->
+      <h1>📋 Minhas Tarefas</h1>
+
+      <!--
+        <p> aqui é metadata visual: versão e
+        contexto do projeto. Não é um heading
+        porque não descreve uma seção nova.
+      -->
+      <p>Projeto Acadêmico · Engenharia de Prompt · v1.0</p>
+
+    </header>
+    <!-- /CABEÇALHO -->
+
+
+    <!-- ===== FORMULÁRIO (VISUAL / DECORATIVO) ===== -->
+    <!--
+      NOTA TÉCNICA IMPORTANTE:
+      Este formulário é VISUAL APENAS nesta versão.
+      Adicionar tarefas dinamicamente ao DOM exige
+      JavaScript — uma limitação conhecida e documentada
+      do escopo CSS-only deste projeto.
+
+      Mantemos a estrutura HTML correta para:
+      1. Demonstrar que sabemos como seria implementado
+      2. O layout ficar completo e profissional
+      3. A acessibilidade do formulário estar correta
+         (para quando JS for adicionado futuramente)
+
+      aria-label no fieldset explica o propósito
+      do grupo de controles para leitores de tela.
+    -->
+    <section
+      class="area-formulario"
+      aria-label="Adicionar nova tarefa (recurso indisponível nesta versão)"
+    >
+
+      <div class="formulario" role="group">
+
+        <!--
+          aria-label em inputs cujo <label> está
+          ausente ou distante. Aqui não há <label>
+          visível, então aria-label é obrigatório
+          para acessibilidade.
+        -->
+        <input
+          class="formulario__input"
+          type="text"
+          placeholder="Nova tarefa..."
+          aria-label="Texto da nova tarefa"
+          disabled
+          title="Adicionar tarefas requer JavaScript"
+        />
+
+        <!--
+          <select> para prioridade.
+          O aria-label descreve o propósito porque
+          não há <label> visível associado.
+        -->
+        <select
+          class="formulario__select"
+          aria-label="Prioridade da nova tarefa"
+          disabled
+        >
+          <option value="alta">🔴 Alta</option>
+          <option value="media" selected>🟡 Média</option>
+          <option value="baixa">🟢 Baixa</option>
+        </select>
+
+        <!--
+          O botão "+" sem contexto não diz nada.
+          aria-label torna o propósito explícito
+          para tecnologias assistivas.
+        -->
+        <button
+          class="formulario__botao"
+          aria-label="Adicionar nova tarefa"
+          disabled
+          title="Recurso disponível com JavaScript"
+        >
+          +
+        </button>
+
       </div>
 
-      <h1>Construindo o <span class="grad">futuro</span><br>linha por linha</h1>
+    </section>
+    <!-- /FORMULÁRIO -->
 
-      <p class="hero-sub">
-        Estudante de Ciência da Computação apaixonado por código, design e soluções que fazem diferença. Este é meu espaço na web.
-      </p>
 
-      <div class="hero-btns">
-        <a href="#features" class="btn btn-primary">Ver Projetos</a>
-        <a href="#contato" class="btn btn-ghost">Entrar em contato</a>
-      </div>
-    </div>
-  </section>
+    <!-- ===== LISTA DE TAREFAS ===== -->
+    <!--
+      Dividimos em <section> por categoria.
+      Cada <section> tem um <h2> que a descreve.
+      aria-labelledby conecta a section ao seu h2:
+      leitores de tela anunciam "Seção: Faculdade"
+      ao entrar na region.
+    -->
 
-  <!-- Stats -->
-  <div class="section" style="padding-top: 0;">
-    <div class="stats">
-      <div class="stat">
-        <div class="stat-num">42+</div>
-        <div class="stat-label">Projetos</div>
-      </div>
-      <div class="stat">
-        <div class="stat-num">3</div>
-        <div class="stat-label">Anos estudando</div>
-      </div>
-      <div class="stat">
-        <div class="stat-num">∞</div>
-        <div class="stat-label">Curiosidade</div>
-      </div>
-      <div class="stat">
-        <div class="stat-num">☕</div>
-        <div class="stat-label">Cafés por semana</div>
-      </div>
-    </div>
-  </div>
 
-  <!-- Features -->
-  <section class="section" id="features">
-    <h2 class="section-title">O que eu <span class="grad">domino</span></h2>
-    <p class="section-sub">Tecnologias e habilidades que venho desenvolvendo</p>
-    <div class="grid">
-      <div class="card" style="animation-delay:0s">
-        <div class="card-icon">🧠</div>
-        <h3>Algoritmos & Estruturas</h3>
-        <p>Solução de problemas complexos com eficiência, desde grafos até programação dinâmica.</p>
-      </div>
-      <div class="card" style="animation-delay:0.1s">
-        <div class="card-icon">🌐</div>
-        <h3>Desenvolvimento Web</h3>
-        <p>HTML, CSS, JavaScript e frameworks modernos para criar interfaces bonitas e funcionais.</p>
-      </div>
-      <div class="card" style="animation-delay:0.2s">
-        <div class="card-icon">🐍</div>
-        <h3>Python & Back-end</h3>
-        <p>Scripts, APIs REST, automações e manipulação de dados com Python e SQL.</p>
-      </div>
-      <div class="card" style="animation-delay:0.3s">
-        <div class="card-icon">🔧</div>
-        <h3>Ferramentas Dev</h3>
-        <p>Git, GitHub, terminal Linux, Docker e boas práticas de versionamento de código.</p>
-      </div>
-      <div class="card" style="animation-delay:0.4s">
-        <div class="card-icon">📱</div>
-        <h3>UI / UX Design</h3>
-        <p>Criação de interfaces intuitivas com atenção à experiência do usuário e acessibilidade.</p>
-      </div>
-      <div class="card" style="animation-delay:0.5s">
-        <div class="card-icon">🚀</div>
-        <h3>Sempre Aprendendo</h3>
-        <p>IA, Cloud, compiladores... a curiosidade é o motor. Nunca paro de estudar.</p>
-      </div>
-    </div>
-  </section>
+    <!-- CATEGORIA: FACULDADE -->
+    <section
+      class="secao-categoria"
+      aria-labelledby="titulo-faculdade"
+    >
 
-  <div class="divider" id="sobre">sobre mim</div>
+      <h2
+        class="secao-categoria__titulo"
+        id="titulo-faculdade"
+      >
+        🎓 Faculdade
+      </h2>
 
-  <!-- About -->
-  <section class="section">
-    <h2 class="section-title">Quem sou <span class="grad">eu</span></h2>
-    <p class="section-sub">Uma breve apresentação</p>
-    <div class="card" style="max-width: 680px;">
-      <p style="color: var(--text); line-height: 1.8; font-size: 1rem;">
-        Sou estudante de <strong>Ciência da Computação</strong>, apaixonado por entender como as coisas funcionam por baixo dos panos. Gosto de transformar ideias em código, resolver problemas reais e aprender algo novo todo dia.
-        <br><br>
-        Este site é meu portfólio pessoal — um lugar para mostrar meus projetos, habilidades e evolução ao longo do curso.
-      </p>
-    </div>
-  </section>
+      <!--
+        role="list" é necessário porque aplicamos
+        list-style: none no CSS. Sem ele, o Safari
+        com VoiceOver remove a semântica de lista.
+      -->
+      <ul class="lista-tarefas" role="list">
 
-  <!-- Footer -->
-  <footer id="contato">
-    <p>© 2026 MeuSite — Feito com amor e muito café</p>
-    <a href="mailto:mr.arthucsgo@gmail.com">mr.arthurcsgo@gmail.com</a>
-  </footer>
+
+        <!-- TAREFA 1: Alta prioridade, não concluída -->
+        <!--
+          ESTRUTURA DE CADA ITEM — REGRA DE OURO:
+          O <input> DEVE VIR ANTES do <label> no HTML.
+          O seletor CSS "input:checked + label" usa
+          o operador + (irmão adjacente), que só
+          funciona para o elemento IMEDIATAMENTE APÓS.
+          Se o label vier antes, o CSS não funciona.
+        -->
+        <li
+          class="item-tarefa prioridade-alta"
+          role="listitem"
+        >
+
+          <!--
+            id="t1": deve ser único na página inteira.
+            Conecta com o for="t1" do label abaixo.
+            Convenção: "t" de tarefa + número sequencial.
+          -->
+          <input
+            type="checkbox"
+            id="t1"
+            aria-describedby="prioridade-t1"
+          />
+
+          <!--
+            for="t1": conecta este label ao input t1.
+            Clicar em qualquer parte deste label
+            alterna o estado do checkbox t1.
+          -->
+          <label for="t1">
+
+            <span class="item-tarefa__texto">
+              Entregar relatório de Eng. de Prompt
+            </span>
+
+            <!--
+              O badge é um span DENTRO do label.
+              Isso é intencional: quando o label
+              recebe text-decoration: line-through,
+              o risco afeta todo o conteúdo do label,
+              incluindo o texto do badge.
+              
+              id para aria-describedby do input acima.
+            -->
+            <span
+              class="badge"
+              id="prioridade-t1"
+              aria-label="Prioridade: Alta"
+            >
+              Alta
+            </span>
+
+          </label>
+
+        </li>
+        <!-- /TAREFA 1 -->
+
+
+        <!-- TAREFA 2: Média prioridade, não concluída -->
+        <li
+          class="item-tarefa prioridade-media"
+          role="listitem"
+        >
+
+          <input
+            type="checkbox"
+            id="t2"
+            aria-describedby="prioridade-t2"
+          />
+
+          <label for="t2">
+
+            <span class="item-tarefa__texto">
+              Estudar seletores CSS avançados (:has, ~)
+            </span>
+
+            <span
+              class="badge"
+              id="prioridade-t2"
+              aria-label="Prioridade: Média"
+            >
+              Média
+            </span>
+
+          </label>
+
+        </li>
+        <!-- /TAREFA 2 -->
+
+
+        <!-- TAREFA 3: Baixa prioridade, CONCLUÍDA -->
+        <!--
+          O atributo "checked" no HTML marca o
+          checkbox como concluído desde o carregamento.
+          Isso demonstra visualmente o estado final
+          do Checkbox Hack sem precisar interagir.
+        -->
+        <li
+          class="item-tarefa prioridade-baixa"
+          role="listitem"
+        >
+
+          <input
+            type="checkbox"
+            id="t3"
+            checked
+            aria-describedby="prioridade-t3"
+          />
+
+          <label for="t3">
+
+            <span class="item-tarefa__texto">
+              Criar estrutura base do HTML semântico
+            </span>
+
+            <span
+              class="badge"
+              id="prioridade-t3"
+              aria-label="Prioridade: Baixa"
+            >
+              Baixa
+            </span>
+
+          </label>
+
+        </li>
+        <!-- /TAREFA 3 -->
+
+
+        <!-- TAREFA 4: Alta prioridade, não concluída -->
+        <li
+          class="item-tarefa prioridade-alta"
+          role="listitem"
+        >
+
+          <input
+            type="checkbox"
+            id="t4"
+            aria-describedby="prioridade-t4"
+          />
+
+          <label for="t4">
+
+            <span class="item-tarefa__texto">
+              Revisar conceitos de acessibilidade WCAG
+            </span>
+
+            <span
+              class="badge"
+              id="prioridade-t4"
+              aria-label="Prioridade: Alta"
+            >
+              Alta
+            </span>
+
+          </label>
+
+        </li>
+        <!-- /TAREFA 4 -->
+
+
+      </ul>
+
+    </section>
+    <!-- /CATEGORIA: FACULDADE -->
+
+
+    <!-- CATEGORIA: PESSOAL -->
+    <section
+      class="secao-categoria"
+      aria-labelledby="titulo-pessoal"
+    >
+
+      <h2
+        class="secao-categoria__titulo"
+        id="titulo-pessoal"
+      >
+        🌱 Pessoal
+      </h2>
+
+      <ul class="lista-tarefas" role="list">
+
+
+        <!-- TAREFA 5: Média prioridade, concluída -->
+        <li
+          class="item-tarefa prioridade-media"
+          role="listitem"
+        >
+
+          <input
+            type="checkbox"
+            id="t5"
+            checked
+            aria-describedby="prioridade-t5"
+          />
+
+          <label for="t5">
+
+            <span class="item-tarefa__texto">
+              Tomar café da manhã
+            </span>
+
+            <span
+              class="badge"
+              id="prioridade-t5"
+              aria-label="Prioridade: Média"
+            >
+              Média
+            </span>
+
+          </label>
+
+        </li>
+        <!-- /TAREFA 5 -->
+
+
+        <!-- TAREFA 6: Baixa prioridade, não concluída -->
+        <li
+          class="item-tarefa prioridade-baixa"
+          role="listitem"
+        >
+
+          <input
+            type="checkbox"
+            id="t6"
+            aria-describedby="prioridade-t6"
+          />
+
+          <label for="t6">
+
+            <span class="item-tarefa__texto">
+              Ler 30 minutos de livro técnico
+            </span>
+
+            <span
+              class="badge"
+              id="prioridade-t6"
+              aria-label="Prioridade: Baixa"
+            >
+              Baixa
+            </span>
+
+          </label>
+
+        </li>
+        <!-- /TAREFA 6 -->
+
+
+        <!-- TAREFA 7: Alta prioridade, não concluída -->
+        <li
+          class="item-tarefa prioridade-alta"
+          role="listitem"
+        >
+
+          <input
+            type="checkbox"
+            id="t7"
+            aria-describedby="prioridade-t7"
+          />
+
+          <label for="t7">
+
+            <span class="item-tarefa__texto">
+              Caminhar 20 minutos ao ar livre
+            </span>
+
+            <span
+              class="badge"
+              id="prioridade-t7"
+              aria-label="Prioridade: Alta"
+            >
+              Alta
+            </span>
+
+          </label>
+
+        </li>
+        <!-- /TAREFA 7 -->
+
+
+      </ul>
+
+    </section>
+    <!-- /CATEGORIA: PESSOAL -->
+
+
+    <!-- CATEGORIA: PROJETOS -->
+    <section
+      class="secao-categoria"
+      aria-labelledby="titulo-projetos"
+    >
+
+      <h2
+        class="secao-categoria__titulo"
+        id="titulo-projetos"
+      >
+        💻 Projetos
+      </h2>
+
+      <ul class="lista-tarefas" role="list">
+
+
+        <!-- TAREFA 8: Média prioridade, não concluída -->
+        <li
+          class="item-tarefa prioridade-media"
+          role="listitem"
+        >
+
+          <input
+            type="checkbox"
+            id="t8"
+            aria-describedby="prioridade-t8"
+          />
+
+          <label for="t8">
+
+            <span class="item-tarefa__texto">
+              Publicar projeto no GitHub Pages
+            </span>
+
+            <span
+              class="badge"
+              id="prioridade-t8"
+              aria-label="Prioridade: Média"
+            >
+              Média
+            </span>
+
+          </label>
+
+        </li>
+        <!-- /TAREFA 8 -->
+
+
+        <!-- TAREFA 9: Baixa prioridade, não concluída -->
+        <li
+          class="item-tarefa prioridade-baixa"
+          role="listitem"
+        >
+
+          <input
+            type="checkbox"
+            id="t9"
+            aria-describedby="prioridade-t9"
+          />
+
+          <label for="t9">
+
+            <span class="item-tarefa__texto">
+              Documentar o Checkbox Hack no README
+            </span>
+
+            <span
+              class="badge"
+              id="prioridade-t9"
+              aria-label="Prioridade: Baixa"
+            >
+              Baixa
+            </span>
+
+          </label>
+
+        </li>
+        <!-- /TAREFA 9 -->
+
+
+      </ul>
+
+    </section>
+    <!-- /CATEGORIA: PROJETOS -->
+
+
+    <!-- ===== RODAPÉ DO CARD ===== -->
+    <footer class="rodape">
+      <p>HTML5 + CSS3 · Zero JavaScript · WCAG AA</p>
+    </footer>
+    <!-- /RODAPÉ -->
+
+
+  </main>
+  <!-- /CARD PRINCIPAL -->
+
 
 </body>
 </html>
